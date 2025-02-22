@@ -1,4 +1,6 @@
 ﻿using background_jobs.Models;
+using background_jobs.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace background_jobs.Repository;
 
@@ -17,8 +19,13 @@ public class CarRepository : ICarRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task<List<Car>> GetAllCarsAsync()
+
+
+    public async Task<List<string>> CheckCarAsync(List<Car> carList)
     {
-        return _context.Cars.ToList();
+        return await _context.Cars
+            .Select(m => m.Link)
+            .Where(link => carList.Select(c => c.Link).Contains(link))
+            .ToListAsync();
     }
 }

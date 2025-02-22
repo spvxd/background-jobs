@@ -6,7 +6,7 @@ namespace background_jobs.Services
 {
     public class ParserService : IParserService
     {
-        private readonly string _url = "https://auto.drom.ru/";
+        private readonly string _url = "https://ulyanovsk.drom.ru/auto/all/?distance=500";
         private readonly HttpClient _httpClient;
         private readonly IServiceProvider _serviceProvider;
 
@@ -29,15 +29,23 @@ namespace background_jobs.Services
                 }
 
                 var carList = ExtractCarsFromHtml(htmlContent);
-                Console.WriteLine(carList);
                 if (carList.Count == 0)
                 {
                     Console.WriteLine("Авто не найдены!");
                     return;
                 }
 
+                Console.WriteLine($"Машины с сайта!, {carList.Count}");
+                Console.WriteLine("--------------------");
                 using var scope = _serviceProvider.CreateScope();
                 var carService = scope.ServiceProvider.GetService<ICarService>();
+                var filteredCars = await carService.CheckCarAsync(carList);
+                if (filteredCars.Count != 0)
+                {
+                    carList = await carService.RemoveDuplicateCarsAsync(carList, filteredCars);
+                }
+                Console.WriteLine($"Совпадения из БД!, {filteredCars.Count}");
+                Console.WriteLine("--------------------");
                 await carService.SaveCarsAsync(carList);
             }
             catch (Exception e)
@@ -48,7 +56,7 @@ namespace background_jobs.Services
         }
 
 
-        private async Task<string> GetPageContentAsync()
+        public async Task<string> GetPageContentAsync()
         {
             var response = await _httpClient.GetAsync(_url);
             if (!response.IsSuccessStatusCode) return string.Empty;
@@ -59,7 +67,7 @@ namespace background_jobs.Services
         }
 
 
-        private List<Car> ExtractCarsFromHtml(string htmlContent)
+        public List<Car> ExtractCarsFromHtml(string htmlContent)
         {
             var carList = new List<Car>();
             var doc = new HtmlDocument();

@@ -15,4 +15,17 @@ public class CarService: ICarService
     {
         await _carRepository.CreateCarAsync(carList);
     }
+
+    public async Task<List<string>>  CheckCarAsync(List<Car> carList)
+    {
+        var filteredCars =  await _carRepository.CheckCarAsync(carList);
+        Console.WriteLine(filteredCars);
+        return filteredCars;
+    }
+
+    public async Task<List<Car>> RemoveDuplicateCarsAsync(List<Car> carList, List<string> filteredCars)
+    {
+        carList.RemoveAll(car => filteredCars.Contains(car.Link));
+        return carList;
+    }
 }
