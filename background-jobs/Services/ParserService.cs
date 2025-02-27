@@ -6,7 +6,7 @@ namespace background_jobs.Services
 {
     public class ParserService : IParserService
     {
-        private readonly string _url = "https://ulyanovsk.drom.ru/auto/all/?distance=500";
+        private readonly string _url = "https://ulyanovsk.drom.ru/auto/all/?distance=1000";
         private readonly HttpClient _httpClient;
         private readonly IServiceProvider _serviceProvider;
 
@@ -44,6 +44,7 @@ namespace background_jobs.Services
                 {
                     carList = await carService.RemoveDuplicateCarsAsync(carList, filteredCars);
                 }
+
                 Console.WriteLine($"Совпадения из БД!, {filteredCars.Count}");
                 Console.WriteLine("--------------------");
                 await carService.SaveCarsAsync(carList);
@@ -85,6 +86,43 @@ namespace background_jobs.Services
             }
 
             return carList;
+        }
+
+        public async Task CheckArchivedCars()
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var carService = scope.ServiceProvider.GetService<ICarService>();
+            var allCars = await carService.GetAllCarsAsync();
+            var archivedCars = new List<Car>();
+            foreach (var car in allCars)
+            {
+                var isArchived = await IsCarArchived(car.Link);
+                Console.WriteLine($"{car.Id}, {isArchived}");
+                if (isArchived) archivedCars.Add(car);
+            }
+
+            if (archivedCars.Count > 0)
+            {
+                await carService.DeleteCarsAsync(archivedCars);
+            }
+        }
+
+        private async Task<bool> IsCarArchived(string carLink)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync(carLink);
+                if(!response.IsSuccessStatusCode) return false;
+                var htmlContent = await response.Content.ReadAsStringAsync();
+                var doc = new HtmlDocument();
+                doc.LoadHtml(htmlContent);
+                return doc.DocumentNode.SelectSingleNode("//div[@class='css-h1pukl edsrp6u2']") != null;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return false;
+            }
         }
     }
 }

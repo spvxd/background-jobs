@@ -25,6 +25,7 @@ public class BackgroundJobService : IHostedService
     public void StartBackgroundJobs()
     {
         RecurringJob.AddOrUpdate("parse-cars", () => ParseCarsAsync(), Cron.Minutely);
+        RecurringJob.AddOrUpdate("check-archived-cars", () => CheckArchivedCarsAsync(), Cron.Hourly);
     }
 
     public async Task ParseCarsAsync()
@@ -32,6 +33,10 @@ public class BackgroundJobService : IHostedService
         await _parserService.ParseWebsite();
     }
 
+    public async Task CheckArchivedCarsAsync()
+    {
+        await _parserService.CheckArchivedCars();
+    }
     
 
     

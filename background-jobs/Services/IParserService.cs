@@ -8,4 +8,5 @@ public interface IParserService
     public Task ParseWebsite();
     public Task<string> GetPageContentAsync();
     public List<Car> ExtractCarsFromHtml(string htmlContent);
+    public Task CheckArchivedCars();
 }

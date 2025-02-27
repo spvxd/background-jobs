@@ -20,12 +20,22 @@ public class CarRepository : ICarRepository
     }
 
 
-
     public async Task<List<string>> CheckCarAsync(List<Car> carList)
     {
         return await _context.Cars
             .Select(m => m.Link)
             .Where(link => carList.Select(c => c.Link).Contains(link))
             .ToListAsync();
+    }
+
+    public async Task<List<Car>> GetAllCarsAsync()
+    {
+        return await _context.Cars.ToListAsync();
+    }
+
+    public async Task DeleteArchivedCarAsync(List<Car> carList)
+    {
+        _context.Cars.RemoveRange(carList);
+        await _context.SaveChangesAsync();
     }
 }

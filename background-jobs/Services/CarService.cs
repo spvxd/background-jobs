@@ -28,4 +28,16 @@ public class CarService: ICarService
         carList.RemoveAll(car => filteredCars.Contains(car.Link));
         return carList;
     }
+
+    public async Task<List<Car>> GetAllCarsAsync()
+    {
+        return await _carRepository.GetAllCarsAsync();
+    }
+
+    public async Task DeleteCarsAsync(List<Car> carList)
+    {
+         await _carRepository.DeleteArchivedCarAsync(carList);
+    }
+
+  
 }
